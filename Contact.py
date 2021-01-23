@@ -1,9 +1,19 @@
 import sqlite3
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 
+def search(item, columnNo):
+    '''
+    returns all the records received from database on searching the given string in the given column 
+    \nitem - The string to be searched for
+    \ncolumnNo - The column of database in which value has to be searched
+        \n\t2 - first name
+        \n\t3 - description
+        \n\t4 - contact number
+        \n\t5 - email id
+    '''
 
-def search(item, columnNo):  # returns all the item received from database search (exactly what I wanted)
     item = item.upper()
 
     conn = sqlite3.connect('AllContacts.db')
@@ -29,266 +39,212 @@ def search(item, columnNo):  # returns all the item received from database searc
     else:
         return(result)
 
+def nothing(id):
+    print ('Doing nothing')
 
-class Contact:
+def deleteContactGUI(id):
+    toDelete = tk.messagebox.askyesno (message='Are you sure you want to delete?', title='Delete', icon='warning')
+    print (toDelete)
 
-    # Member functions
-    def __init__(self):
-        self.firstName = input('\n\nEnter name of contact: ')
-        self.company = input('Enter company for contact: ')
-        self.contactNumber = input('Enter contact number for contact: ')
-        self.emailID = input('Enter email for contact: ')
+    if toDelete:
+        conn = sqlite3.connect('AllContacts.db')
+        cur = conn.cursor()
 
-    # def addContact(self):
-    #     conn = sqlite3.connect('AllContacts.db')
-    #     cur = conn.cursor()
+        cur.execute('DELETE FROM Contact WHERE id = ?', (id,))
+        result = cur.fetchone()
+        print (result)
 
-    #     params = (self.firstName, self.company,
-    #               self.contactNumber, self.emailID)
-    #     cur.execute(
-    #         'INSERT INTO Contact (id, first_name, company, contact_number, email) VALUES (NULL, ?, ?, ?, ?)', params)
+        conn.commit()
+        conn.close()
 
-    #     conn.commit()
-    #     conn.close()
-
-    #     print("\nData saved to Database")
-
-    def display(self):
-        print("""
-        First Name: {0}
-        Company: {1}
-        Contact Number: {2}
-        E-mail ID: {3}""" .format(self.firstName, self.company, self.contactNumber, self.emailID))
-
-
-def searchByContactNumber():  # sorted
-    contactno = input(
-        '\nInput contact no. of the contact you want to search: ')
-
-    if not(contactno.isnumeric()):
-        print('Invalid contact no.')
-    else:
-        # printRecords(search(contactno,4))
-        pass
-
-
-def searchByFirstName():  # sorted
-    fname = input('\nInput the name of the contact you want to search: ')
-    # printRecords(search(fname,2))
-
-
-def deleteContact():
-    # dependent on search() [sorted], also deletes without confirming which contact to delete [sorted]
-    # Search the thing you want, extract id then delete record
-
-    print('To delete the record you must first search it and then confirm if you really want to delete it')
-    print('Enter the code for which category you want to search\n')
-    # choice = printingForSearch()
-
-    item = input('Enter what you want you search: ')
-
-    # printRecords(search(item, (choice+1)))
-
-    id = input('Enter the ID for the contact you want to delete: ')
-
-    conn = sqlite3.connect('AllContacts.db')
-    cur = conn.cursor()
-
-    cur.execute('DELETE FROM Contact WHERE id = ?', (id,))
-    result = cur.fetchone()
-
-    conn.commit()
-    conn.close()
-
-    print('Record has been deleted')
-
-
-def updateContact(choice2):
-    # dependent on search() [sorted], also updates without confirming which contact to update [sorted] and doesnt print the changed value [also sorted]
-    # First search, then ask what to change and then change that
-
-    print('To edit the record, you must first search it, select what you want to edit and then confirm if you really want to edit it')
-    print('Enter the code for which category you want to search\n')
-    # choice1 = printingForSearch()
-
-    searchStr = input('\nEnter what has to be searched: ')
-
-    # printRecords(search(searchStr, (choice1+1)))
-
-    id = input('\nEnter the ID for the contact to be edited: ')
-
-    print('\nEnter the code for what field you want to edit')
-    # choice2 = printingForSearch()
-
-    newStr = input('\nEnter new value for that field: ')
-
-    conn = sqlite3.connect('AllContacts.db')
-    cur = conn.cursor()
-
-    if choice2 == 1:
-        cur.execute(
-            'UPDATE Contact SET first_name = ? WHERE id = ?', (newStr, id))
-    if choice2 == 2:
-        cur.execute('UPDATE Contact SET company = ? WHERE id = ?', (newStr, id))
-    if choice2 == 3:
-        cur.execute(
-            'UPDATE Contact SET contact_number = ? WHERE id = ?', (newStr, id))
-    if choice2 == 4:
-        cur.execute('UPDATE Contact SET email = ? WHERE id = ?', (newStr, id))
-
-    conn.commit()
-
-    cur.execute('SELECT * FROM Contact WHERE id = ?', (id,))
-    result = cur.fetchone()
-
-    print('\nThis is the updated contact:')
-    print(result)
-
-    conn.close()
-
-
-def main():
-
-    isRunning = True
-
-    while (isRunning):
-        print('\n\nWelcome to your Contact Book\n')
-        print('Enter the number before the function you want to perform\n')
-        print('1: Add Contact')
-        print('2: View all Contacts')
-        print('3: Search Contact by Name')
-        print('4: Search Contact by Contact Number')
-        print('5: Delete Contact')
-        print('6: Update Contact')
-        print('10: Exit')
-        choice = int(input('\nEnter your choice: '))
-
-        if choice == 1:
-            contact = Contact()
-            contact.addContact()
-        elif choice == 2:
-            # printAll()
-            pass
-        elif choice == 3:
-            searchByFirstName()
-        elif choice == 4:
-            searchByContactNumber()
-        elif choice == 5:
-            deleteContact()
-        elif choice == 6:
-            pass
-            # updateContact()
-        elif choice == 10:
-            isRunning = False
-        else:
-            print('\nInvalid Input')
-
+        print('Record has been deleted')
 
 def buildGUI():
 
-    global lastButtonPress
     root = tk.Tk()
-    lastButtonPress = 0
 
-    def searchScreen(labelText, actionText):
-        print ("In search screen function")
+    def editContactScreen (id):
+        print ('Editing a single record')
+        print ('id: ', id)
+        i=0
+
+        editScreen = tk.Toplevel (root)
+        frame = ttk.Frame (editScreen)
+
+        infoLabel = ttk.Label (frame, text = 'Edit the contact in the text boxes given below')
+        nameLabel = ttk.Label(frame, text='Name: ')
+        nameBox = ttk.Entry(frame, width=15)
+        descLabel = ttk.Label(frame, text='Description: ')
+        descBox = ttk.Entry(frame, width=15)
+        phoneLabel = ttk.Label(frame, text='Phone Number: ')
+        phoneBox = ttk.Entry(frame, width=15)
+        emailLabel = ttk.Label(frame, text='E-Mail: ')
+        emailBox = ttk.Entry(frame, width=15)
+        submit = ttk.Button(frame, text='Submit', command=lambda: submitCallback())
+        close = ttk.Button(frame, text='Close', command=lambda: closeCallback())
+
+        frame.grid (row=0, column=0, sticky='news')
+
+        infoLabel.grid (row=0, column=0, columnspan=2)
+        nameLabel.grid (row=1, column=0)
+        nameBox.grid (row=1, column=1)
+        descLabel.grid (row=2, column=0)
+        descBox.grid (row=2, column=1)
+        phoneLabel.grid (row=3, column=0)
+        phoneBox.grid (row=3, column=1)
+        emailLabel.grid (row=4, column=0)
+        emailBox.grid (row=4, column=1)
+        submit.grid (row=5, column=0)
+        close.grid (row=5, column=1)
+
+        editScreen.rowconfigure (0, weight=1, minsize=800)
+        editScreen.columnconfigure (0, weight=1, minsize=1200)
+
+        for i in range(0, 2):
+            frame.columnconfigure (i, weight=1)
+        for i in range (0, 6):
+            frame.rowconfigure (i, weight=1)
+
+        conn = sqlite3.connect('AllContacts.db')
+        cur = conn.cursor()
+
+        cur.execute('SELECT * FROM Contact WHERE id = ?', (id,))
+        result = cur.fetchall()
+
+        conn.commit()
+        conn.close()
+
+        nameBox.insert (0, result[0][1])
+        descBox.insert (0, result[0][2])
+        phoneBox.insert (0, result[0][3])
+        emailBox.insert (0, result[0][4])
+
+        def submitCallback ():
+            conn = sqlite3.connect('AllContacts.db')
+            cur = conn.cursor()
+
+            name = nameBox.get()
+            description = descBox.get()
+            phoneNo = phoneBox.get()
+            email = emailBox.get()
+
+            if (not name) or (not description) or (not phoneNo) or (not email):
+                print("\nData not saved to Database")
+                print("One or more fields was empty")
+            else:
+                print ('Data saved to database')
+                cur.execute('UPDATE Contact SET first_name = ? WHERE id = ?', (name, id))
+                cur.execute('UPDATE Contact SET company = ? WHERE id = ?', (description, id))
+                cur.execute('UPDATE Contact SET contact_number = ? WHERE id = ?', (phoneNo, id))
+                cur.execute('UPDATE Contact SET email = ? WHERE id = ?', (email, id))
+
+            conn.commit()
+            conn.close()
+
+        def closeCallback():
+            editScreen.destroy()
+
+    def searchScreen(labelText, actionText, actionMethod, searchType):
+
+        print("In search screen function")
         newWind = tk.Toplevel(root)
 
-        topFrame = tk.Frame(newWind, height=200, width=500)
+        topFrame = tk.Frame(newWind)
 
-        searchLabel = tk.Label(
-            topFrame, text=labelText)
-        searchLabel.place(relx=0.5, rely=0.25, anchor='n')
-
+        searchLabel = tk.Label(topFrame, text=labelText)
         searchBox = tk.Entry(topFrame, width=30)
-        searchBox.place(relx=0.4, rely=0.6, anchor='center')
+        searchButton = tk.Button(topFrame, text='Search', command=lambda: searchButtonCallback())
+        destroy = tk.Button(topFrame, text='Close', command=lambda: newWind.destroy())
 
-        searchButton = tk.Button(
-            topFrame, text='Search', command=lambda: print(searchBox.get()))
-        searchButton.place(relx=0.7, rely=0.6, anchor='center')
+        searchLabel.grid (row=0, column=0, columnspan=3)
+        searchBox.grid (row=1, column=0)
+        searchButton.grid (row=1, column=1)
+        destroy.grid (row=1, column=2)
+        
+        bottomFrame = tk.Frame(newWind, padx=20, pady=20)
 
-        topFrame.grid(row=0, column=0)
+        topFrame.grid(row=0, column=0, sticky='ew')
+        bottomFrame.grid(row=1, column=0, sticky='ew')
 
-        bottomFrame = tk.Frame (newWind, padx = 20, pady = 20)
+        newWind.rowconfigure (0, weight=1, minsize=300)
+        newWind.rowconfigure (1, weight=2, minsize=600)
+        newWind.columnconfigure (0, weight=1, minsize=1200)
 
-        '''
-        Code for 'SELECT * FROM Contact' query to database here
-        '''
+        topFrame.rowconfigure (0, weight=1, minsize=100)
+        topFrame.rowconfigure (1, weight=1, minsize=100)
+        topFrame.columnconfigure (0, weight=2)
+        topFrame.columnconfigure (1, weight=1)
+        topFrame.columnconfigure (2, weight=1)
 
-        testdata = [('Mugdha', 'Me', '8237193773', 'mugdha@topmail.com'),
-                    ('Ashu', 'Mom', '7233944717', 'ashu1@topmail.com'),
-                    ('Makarand', 'Dad', '2138471233', 'mak@topmail.com'),
-                    ('Lalita', 'Grandma', '0921364643', '-')]
+        def actionCallback(id):
+            # newWind.destroy ()
+            actionMethod (id)
 
-        total_rows = len(testdata)
-        total_columns = len(testdata[0])
+        def searchButtonCallback():
+            searchQuery = searchBox.get()
+            result = search(searchQuery, searchType)
 
-        for i in range(total_rows): 
-            for j in range(total_columns): 
-                  
-                if j == total_columns-1:
-                    wid = 30
-                else:
-                    wid = 15
-                
-                e = tk.Label(bottomFrame, text=testdata[i][j] , width=wid)
-                e.grid(row=i, column=j) 
-                # e.insert(tk.END, testdata[i][j]) 
+            total_rows = len(result)
+            total_columns = len(result[0])
 
-                if j == total_columns-1:
-                    action = tk.Button (bottomFrame, text=actionText, padx = 5)
-                    action.grid (row=i, column=(j+1))
+            for i in range(total_rows):
+                for j in range(total_columns):
 
-        bottomFrame.grid (row=1, column=0)
+                    if (j == 0):
+                        id = result [i][j]
+                    else:
+
+                        e = tk.Label(bottomFrame, text=result[i][j])
+                        e.grid(row=i, column=j-1)
+
+                        if j == total_columns-1:
+                            action = tk.Button(bottomFrame, text=actionText, padx=5, command=lambda: actionCallback(id))
+                            action.grid(row=i, column=j)
+
+            for i in range (total_rows):
+                bottomFrame.rowconfigure (i, weight=1)
+            for i in range (total_columns):
+                bottomFrame.columnconfigure (i, weight=1)
 
     def addContactCallback():
-        newWind = tk.Toplevel(root)
+        newWind = tk.Toplevel(root, )
 
-        textFrame = tk.LabelFrame(newWind, padx=10, pady=10,
-                                  bd=2, height=400, width=500)
-        textFrame.grid(row=0, column=1)
+        textFrame = tk.LabelFrame(newWind, text='New Contact', padx=10, pady=10)
+        textFrame.grid(row=0, column=0, sticky='news')
 
         nameLabel = tk.Label(textFrame, text='Name: ')
-        nameLabel.place(relx=0.1, rely=0.1, anchor='w')
-
-        # name = tk.StringVar()
-        nameBox = ttk.Entry(textFrame, width=30, state='disabled')
-        nameBox.place(relx=0.5, rely=0.1, anchor='w')
-
+        nameBox = ttk.Entry(textFrame, width=30)
         descLabel = tk.Label(textFrame, text='Description: ')
-        descLabel.place(relx=0.1, rely=0.3, anchor='w')
-
-        # description = tk.StringVar()
-        descBox = ttk.Entry(textFrame, width=30, state='disabled')
-        descBox.place(relx=0.5, rely=0.3, anchor='w')
-
+        descBox = ttk.Entry(textFrame, width=30)
         phoneLabel = tk.Label(textFrame, text='Phone Number: ')
-        phoneLabel.place(relx=0.1, rely=0.5, anchor='w')
-
-        # phoneNo = tk.StringVar()
-        phoneBox = tk.Entry(textFrame, width=30, state='disabled')
-        phoneBox.place(relx=0.5, rely=0.5, anchor='w')
-
+        phoneBox = tk.Entry(textFrame, width=30)
         emailLabel = tk.Label(textFrame, text='E-Mail: ')
-        emailLabel.place(relx=0.1, rely=0.7, anchor='w')
+        emailBox = ttk.Entry(textFrame, width=30)
+        submit = tk.Button(textFrame, text='Submit', command=lambda: submitCallback())
 
-        # email = tk.StringVar()
-        emailBox = ttk.Entry(textFrame, width=30, state='disabled')
-        emailBox.place(relx=0.5, rely=0.7, anchor='w')
+        nameLabel.grid(row=0, column=0)
+        nameBox.grid(row=0, column=1)
+        descLabel.grid(row=1, column=0)
+        descBox.grid(row=1, column=1)
+        phoneLabel.grid(row=2, column=0)
+        phoneBox.grid(row=2, column=1)
+        emailLabel.grid(row=3, column=0)
+        emailBox.grid(row=3, column=1)
+        submit.grid(row=4, column=0, columnspan=2)
 
-        submit = tk.Button(textFrame, text='Submit',
-                           command=lambda: submitCallback(lastButtonPress))
-        submit.place(relx=0.4, rely=0.85)
-
+        newWind.rowconfigure (0, weight=1, minsize=800)
+        newWind.columnconfigure (0, weight=1, minsize=1200)
+        textFrame.rowconfigure (0, weight=1)
+        textFrame.rowconfigure (1, weight=1)
+        textFrame.rowconfigure (2, weight=1)
+        textFrame.rowconfigure (3, weight=1)
+        textFrame.rowconfigure (4, weight=2)
+        textFrame.columnconfigure (0, weight=1)
+        textFrame.columnconfigure (1, weight=1)
+        
         print("\nIn Add Contact Callback")
-        nameBox.config(state=tk.NORMAL)
-        descBox.config(state=tk.NORMAL)
-        phoneBox.config(state=tk.NORMAL)
-        emailBox.config(state=tk.NORMAL)
-        # global lastButtonPress
-        # lastButtonPress = 1   # for add contact button
 
-        def submitCallback(lastButtonPress):
+        def submitCallback():
             print("\nIn Submit Callback")
             name = nameBox.get()
             description = descBox.get()
@@ -305,74 +261,50 @@ def buildGUI():
                 print("One or more fields was empty")
             else:
                 cur.execute(
-                'INSERT INTO Contact (id, first_name, company, contact_number, email) VALUES (NULL, ?, ?, ?, ?)', params)
+                    'INSERT INTO Contact (id, first_name, company, contact_number, email) VALUES (NULL, ?, ?, ?, ?)', params)
                 print("\nData saved to Database")
 
             conn.commit()
             conn.close()
 
-            newWind.destroy ()
+            newWind.destroy()
 
-    '''
-    Make a window 
-    - One textbox on top for searching
-    - Table below that to show search results
-    '''
     def searchContact1Callback():
+        '''
+        Make a window 
+        - One textbox on top for searching
+        - Table below that to show search results
+        '''
         print("\nIn Search by Name Callback")
 
-        searchScreen('Enter the name you want to search', 'Search')
-        
+        searchScreen('Enter the name you want to search', 'Found it!', nothing, 2)
+
     def searchContact2Callback():
         print("\nIn Search by Number Callback")
 
+        searchScreen('Enter the phome number you want to search', 'Found it!', nothing, 4)
+
     def updateCallback():
+        '''
+        first call searchScreen function with following parameters
+        ('Enter the name of the contact to update', 'Edit', editContactScreen, 2)
 
-        def updateNameCallback():
-            print("In Update Name Callback")
-
-        def updateDescCallback():
-            print("In Update Description Callback")
-
-        def updatePhoneCallback():
-            print("In Update Phone Number Callback")
-
-        def updateEmailCallback():
-            print("In Update Email Callback")
+        make new function editContactScreen() which does the following:
+        - it is the callback for the button in the searchScreen
+        - it makes a new window with 4 entries with the current database data inserted into the entrys
+        - user edits the entrys and clicks submit
+        - then the data from the entrys gets updated to database
+        '''
 
         print("In Update Callback")
 
-        newWind = tk.Toplevel(root, height=400, width=300)
-
-        choiceLabel = tk.Label(
-            newWind, text="Click the button for the option to be updated:")
-        choiceLabel.place(relx=0.5, rely=0.25, anchor='n')
-
-        nameChoice = tk.Button(newWind, text="Name",
-                               padx=15, command=updateNameCallback)
-        nameChoice.place(relx=0.5, rely=0.35, anchor='n')
-
-        descChoice = tk.Button(newWind, text="Description",
-                               padx=15, command=updateDescCallback)
-        descChoice.place(relx=0.5, rely=0.45, anchor='n')
-
-        phoneChoice = tk.Button(
-            newWind, text="Phone Number", padx=15, command=updatePhoneCallback)
-        phoneChoice.place(relx=0.5, rely=0.55, anchor='n')
-
-        emailChoice = tk.Button(newWind, text="Email",
-                                padx=15, command=updateEmailCallback)
-        emailChoice.place(relx=0.5, rely=0.65, anchor='n')
-
-        destroy = tk.Button(newWind, text="Destroy Window",
-                            padx=15, command=lambda: newWind.destroy())
-        destroy.place(relx=0.5, rely=0.8, anchor='n')
+        searchScreen ('Enter the name of the contact to update', 'Edit', editContactScreen, 2)
 
     def viewAllCallback():
         print("View All Contacts Callback")
 
         newWind = tk.Toplevel(root)
-        topFrame = tk.Frame (newWind, padx = 20, pady = 20)
+        topFrame = tk.Frame(newWind, padx=20, pady=20)
 
         conn = sqlite3.connect('AllContacts.db')
         cur = conn.cursor()
@@ -387,50 +319,67 @@ def buildGUI():
         total_rows = len(result)
         total_columns = len(result[0])
 
-        for i in range(total_rows): 
-            for j in range(total_columns): 
-                  
-                if j == total_columns-1:
-                    wid = 30
+        for i in range(total_rows):
+            for j in range(total_columns):
+                if (j == 0):
+                    pass
                 else:
-                    wid = 15
-                
-                e = tk.Label(topFrame, text=str(result[i][j]) , width=wid)
-                print (result[i][j])
-                e.grid(row=i, column=j) 
+                    if j == total_columns-1:
+                        wid = 30
+                    else:
+                        wid = 15
 
-        topFrame.grid (row=0, column=0)
+                    e = tk.Label(topFrame, text=str(result[i][j]), width=wid)
+                    e.grid(row=i, column=j-1)
 
-        bottomFrame = tk.Frame (newWind, height=100, width=600, padx=20, pady=20)
+        destroy = tk.Button(topFrame, text="Close Window", padx=15, command=lambda: newWind.destroy())
 
-        destroy = tk.Button(bottomFrame, text="Close Window",
-                            padx=15, command=lambda: newWind.destroy())
-        destroy.place(relx=0.5, rely=0.5, anchor='center')
+        topFrame.grid(row=0, column=0, sticky='news')
+        destroy.grid(row=(total_rows), column=0, columnspan=total_columns)
 
-        bottomFrame.grid (row=1, column=0)
+        newWind.rowconfigure (0, weight=1)
+        newWind.columnconfigure (0, weight=1)
 
-    buttonFrame = tk.LabelFrame(root, padx=10, pady=10, height=400, width=300)
-    buttonFrame.grid(row=0, column=0)
+        for i in range (total_rows):
+            topFrame.rowconfigure (i, weight=1)
+        
+        topFrame.rowconfigure (total_rows, weight=2)
+        
+        for i in range (total_columns-1):
+            topFrame.columnconfigure (i , weight=1)
 
-    addContact = tk.Button(
-        buttonFrame, text="Add New Contact", command=addContactCallback)
-    addContact.place(relx=0.5, rely=0.1, anchor='n')
+    def deleteCallback ():
+        print ("In delete contact callback")
 
-    searchContact1 = tk.Button(
-        buttonFrame, text="Search by Name", command=searchContact1Callback)
-    searchContact1.place(relx=0.5, rely=0.3, anchor='n')
+        searchScreen('Enter the name of contact to delete', 'Delete', deleteContactGUI, 2)
 
-    searchContact2 = tk.Button(
-        buttonFrame, text="Search by Contact Number", command=searchContact2Callback)
-    searchContact2.place(relx=0.5, rely=0.5, anchor='n')
+    buttonFrame = tk.LabelFrame(root, padx=20, pady=20) #, height=800, width=600)
+    buttonFrame.grid(row=0, column=0, sticky='news')
 
-    updateContact = tk.Button(
-        buttonFrame, text="Update Contact", command=updateCallback)
-    updateContact.place(relx=0.5, rely=0.7, anchor='n')
+    addContact = ttk.Button(buttonFrame, text="Add New Contact", command=addContactCallback, width=30)
+    searchContact1 = ttk.Button(buttonFrame, text="Search by Name", command=searchContact1Callback, width=30)
+    searchContact2 = ttk.Button(buttonFrame, text="Search by Contact Number", command=searchContact2Callback, width=30)
+    updateContact = ttk.Button(buttonFrame, text="Update Contact", command=updateCallback, width=30)
+    viewAll = ttk.Button(buttonFrame, text="View All Contacts", command=viewAllCallback, width=30)
+    deleteContact = ttk.Button(buttonFrame, text="Delete a Contact", command=deleteCallback, width=30)
+    
+    addContact.grid(row=0, column=0)
+    searchContact1.grid(row=1, column=0)
+    searchContact2.grid(row=2, column=0)
+    updateContact.grid(row=3, column=0)
+    viewAll.grid(row=4, column=0)
+    deleteContact.grid(row=5, column=0)
 
-    viewAll = tk.Button(
-        buttonFrame, text="View All Contacts", command=viewAllCallback)
-    viewAll.place(relx=0.5, rely=0.9, anchor='n')
+    root.columnconfigure (0, weight=1, minsize=600)
+    root.rowconfigure (0, weight=1, minsize=800)
+
+    buttonFrame.columnconfigure (0, weight=1)
+    buttonFrame.rowconfigure (0, weight=1)
+    buttonFrame.rowconfigure (1, weight=1)
+    buttonFrame.rowconfigure (2, weight=1)
+    buttonFrame.rowconfigure (3, weight=1)
+    buttonFrame.rowconfigure (4, weight=1)
+    buttonFrame.rowconfigure (5, weight=1)
 
     root.mainloop()
 
